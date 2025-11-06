@@ -4,7 +4,7 @@ A Dart package for creating, parsing, and validating robust, immutable, and URL-
 
 This package provides an immutable `ResourceId` class that enforces modern API design principles. It generates prefixed, URL-safe identifiers (e.g., `books/9V233V10702ETQW3S1WKTZ~`) that are easy to read, copy, and debug, with built-in checksums to prevent typos.
 
-This implementation is based on the strong recommendations for great resource identifiers in the book [API Design Patterns](httpss://www.apidesignpatterns.io/) by J.J Geewax.
+This implementation is based on the strong recommendations for great resource identifiers in the book [API Design Patterns](https://www.manning.com/books/api-design-patterns) by J.J Geewax.
 
 ## Why use ResourceId?
 
@@ -145,7 +145,7 @@ UUIDs (Universally Unique Identifiers) are a common standard for generating uniq
 
 | Feature            | Standard UUID                                | ResourceId                     | Benefit                                                                                                             |
 | :----------------- | :------------------------------------------- | :----------------------------- | :------------------------------------------------------------------------------------------------------------------ |
-| **Readability**    | `123e4567-e89b-12d3-a456-426655440000`       | `books/BKB3XYT465KZ69`         | Easier for humans to read, transcribe, and share. Uses a character set that avoids common visual ambiguities.     |
+| **Readability**    | `123e4567-e89b-12d3-a456-426655440000`       | `books/BKB3X-YT465-KZ69`         | Easier for humans to read, transcribe, and share. Uses a character set that avoids common visual ambiguities.     |
 | **Typo Detection** | None                                         | Built-in Checksum              | `ResourceId.parse()` instantly detects typos or copy-paste errors, preventing "not found" errors from ever hitting your database. |
 | **Resource Context** | No                                           | Prefixed (`books/...`)         | Identifiers are self-describing, which makes debugging, logging, and reading API requests much clearer.             |
 | **Size Flexibility**| Fixed at 128 bits                            | Flexible (e.g., 64 bits)       | Allows you to choose a smaller, more performant size (like a `BIGINT`) for resources that don't require global uniqueness, optimizing database performance. |
