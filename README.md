@@ -138,3 +138,16 @@ final reconstructedId = ResourceId.fromValue(
   value: valueToStore,
 );
 ```
+
+## Comparison with UUIDs
+
+UUIDs (Universally Unique Identifiers) are a common standard for generating unique IDs. While they are an excellent choice for ensuring global uniqueness, `ResourceId` offers several practical advantages for application development:
+
+| Feature            | Standard UUID                                | ResourceId                     | Benefit                                                                                                             |
+| :----------------- | :------------------------------------------- | :----------------------------- | :------------------------------------------------------------------------------------------------------------------ |
+| **Readability**    | `123e4567-e89b-12d3-a456-426655440000`       | `books/BKB3XYT465KZ69`         | Easier for humans to read, transcribe, and share. Uses a character set that avoids common visual ambiguities.     |
+| **Typo Detection** | None                                         | Built-in Checksum              | `ResourceId.parse()` instantly detects typos or copy-paste errors, preventing "not found" errors from ever hitting your database. |
+| **Resource Context** | No                                           | Prefixed (`books/...`)         | Identifiers are self-describing, which makes debugging, logging, and reading API requests much clearer.             |
+| **Size Flexibility**| Fixed at 128 bits                            | Flexible (e.g., 64 bits)       | Allows you to choose a smaller, more performant size (like a `BIGINT`) for resources that don't require global uniqueness, optimizing database performance. |
+
+While you can absolutely use a 128-bit `ResourceId` to wrap a UUID's raw bytes to get the best of both worlds, for most application use cases, a 64-bit `ResourceId` provides a more ergonomic, safer, and often more performant solution.
