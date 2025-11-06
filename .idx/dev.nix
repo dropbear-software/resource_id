@@ -6,6 +6,7 @@
   # Use https://search.nixos.org/packages to find packages
   packages = [
     pkgs.dart
+    pkgs.openssh
   ];
   # Sets environment variables in the workspace
   env = { };
@@ -13,7 +14,6 @@
     # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
     extensions = [
       "Dart-Code.dart-code"
-      "Dart-Code.flutter"
       "google.gemini-cli-vscode-ide-companion"
     ];
     workspace = {
