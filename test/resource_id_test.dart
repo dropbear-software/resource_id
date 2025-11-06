@@ -3,14 +3,10 @@ import 'package:test/test.dart';
 
 void main() {
   group('A group of tests', () {
-    final awesome = Awesome();
-
-    setUp(() {
-      // Additional setup goes here.
-    });
+    final bookId = ResourceId.generate(resourceType: 'books');
 
     test('First Test', () {
-      expect(awesome.isAwesome, isTrue);
+      expect(bookId.resourceType, equals('books'));
     });
   });
 }
