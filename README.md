@@ -1,23 +1,32 @@
-A Dart package for creating, parsing, and validating robust, immutable, and K-Sortable resource identifiers.
+# ResourceId
 
-This package provides an immutable `ResourceId` class that enforces modern API design principles. It generates prefixed, URL-safe identifiers (e.g., `books/64s36d1n6rvkge9gc5h66~`) that are easy to read, copy, and debug, with built-in checksums to detect typos.
+A Dart package for creating, parsing, and validating robust, immutable, and URL-safe resource identifiers.
 
-This implementation is based on the strong recommendations for great resource identifiers in the book API Design Patterns by J.J Geewax.
+This package provides an immutable `ResourceId` class that enforces modern API design principles. It generates prefixed, URL-safe identifiers (e.g., `books/9V233V10702ETQW3S1WKTZ~`) that are easy to read, copy, and debug, with built-in checksums to prevent typos.
+
+This implementation is based on the strong recommendations for great resource identifiers in the book [API Design Patterns](httpss://www.apidesignpatterns.io/) by J.J Geewax.
+
+## Why use ResourceId?
+
+While it can be tempting to use simple `String`s or `UUID`s for identifiers, they often fall short in real-world applications. This package solves common problems by providing IDs that are:
+
+- **Type-Safe:** Prevents you from accidentally using a `userId` where a `bookId` was expected.
+- **Prefix-Aware:** The resource type is part of the ID (e.g., `books/...`), making debugging and logging much clearer.
+- **Typo-Proof:** A built-in checksum immediately catches typos or copy-paste errors during parsing, preventing invalid queries.
+- **Human-Readable:** Uses Crockford's Base32, an encoding designed to avoid ambiguous characters (like `I`, `L`, `O`, and `U`), making IDs easier for humans to read and transcribe.
 
 ## Features
 
-This package provides a `ResourceId` class with the following features:
+- **Immutable & Type-Safe:** Enforces correctness at compile time.
+- **Prefix-Aware:** Includes the resource type (e.g., `books/`) in the ID, preventing ID-mixing bugs.
+- **Checksum Validation:** The final character is a `mod-37` checksum. The `parse` method automatically validates this.
+- **Crockford's Base32 Encoding:** Uses a highly readable, URL-safe character set.
+- **Friendly Parsing:** The parser is case-insensitive and ignores hyphens, allowing for more human-readable formats like `books/bkb3-xyt4-65kz-69`.
+- **Hierarchical Support:** Natively supports parent-child relationships (e.g., `books/1/pages/2`).
+- **Database-First Serialization:** Easily and efficiently serialize to `Uint8List` (for `BINARY`), `BigInt` (for `BIGINT`), or a pure `String` (for key-value stores) and reconstruct with confidence.
+- **Secure Generation:** Uses a cryptographically secure random number generator.
 
-* **Immutable & Type-Safe:** Enforces correctness at compile time.
-* **Prefix-Aware:** Includes the resource type (e.g., `books/`) in the ID, preventing ID-mixing bugs.
-* **Checksum Validation:** The final character is a `mod-37` checksum. The `parse` method automatically validates this, instantly catching typos or copy-paste errors.
-* **Crockford's Base32 Encoding:** Uses a highly readable, URL-safe character set specifically designed to avoid letters that are commonly misread by humans (i.e. no `I`, `L`, `O`).
-* **Friendly Parsing:** The parser is case-insensitive, ignores hyphens thus allowing you the opportunity to make identifiers more human readable without any technical trade-offs.
-* **Hierarchical Support:** Natively supports parent-child relationships (e.g., `books/1/pages/2`).
-* **Database Friendly:** Easily exports to `Uint8List` (for `BINARY`) or `BigInt` (for `BIGINT`) for efficient database storage.
-* **Secure Generation:** Uses a cryptographically secure random number generator by default.
-
-## Getting started
+## Getting Started
 
 Add the package to your `pubspec.yaml`:
 
@@ -33,64 +42,39 @@ import 'package:resource_id/resource_id.dart';
 ```
 
 ## Usage
-Here are several common examples of how to use the `ResourceId` class.
 
-### 1. Generate a new ID
-Use `ResourceId.generate()` to create a new, secure identifier.
+### 1. Generating a New ID
+Use `ResourceId.generate()` to create a new, secure identifier. The default size of 8 bytes is recommended for most resources as it fits perfectly in a database `BIGINT` column.
 
 ```dart
 // Generate a new ID for a "books" collection
-final newBookId = ResourceId.generate(resourceType: 'books');
+final bookId = ResourceId.generate(resourceType: 'books');
 
 // The toString() method includes the type prefix and checksum
-print(newBookId);
-// Output: books/64S36D1N6RVKGE9GC5H66~
+print(bookId);
+// Output: books/8A1B2C3D4E5F6G7H8J~ (random part will vary)
 ```
 
-### 2. Parse and Validate an ID
-Use `ResourceId.parse()` to convert a string back into a `ResourceId`. The checksum is validated automatically.
-
-```dart
-final idString = 'books/KFV1B65P8Q3CMC';
-final id = ResourceId.parse(idString);
-
-print(id.resourceType); // Output: books
-print(id.parent);       // Output: null
-```
-
-### 3. Detect Typos with Checksums
-If you parse an ID with a typo, the checksum will fail, and a `FormatException` will be thrown. This prevents you from querying your database with a malformed ID.
+### 2. Parsing and Validating an ID
+Use `ResourceId.parse()` to convert a string back into a `ResourceId`. The checksum is validated automatically, throwing a `FormatException` if there's a typo.
 
 ```dart
 try {
   // Note the typo: 'P' was mistyped as 'A'
-  final badId = 'books/KFV1B65A8Q3CMC'; 
+  final badId = 'books/BKB3XYT465KZ6A'; 
   ResourceId.parse(badId);
 } on FormatException catch (e) {
-  print(e);
-  // Output: FormatException: Invalid identifier: Checksum mismatch. Possible typo.
+  print(e.message);
+  // Output: Invalid identifier: Checksum mismatch. Possible typo.
 }
 ```
 
-### 4. Use the "Friendly" Parser
-The parser handles common user mistakes, like hyphens for readability or mixed case.
-
-```dart
-// This messy, human-typed ID...
-final messyId = 'books/ahm6-a83h-enmp~';
-
-// ...is parsed, normalized, and validated perfectly.
-final id = ResourceId.parse(messyId);
-
-print(id); // Output: books/AHM6A83HENMP~
-```
-
-### 5. Create Hierarchical IDs
-The `ResourceId` class natively handles parent-child relationships.
+### 3. Creating Hierarchical IDs
+Pass the `parent` ID during generation to create a child resource.
 
 ```dart
 // 1. Create the parent ID
-final bookId = ResourceId.parse('books/AHM6A83HENMP~');
+final bookId = ResourceId.parse('books/BKB3XYT465KZ69');
 
 // 2. Generate a child ID, passing the parent
 final pageId = ResourceId.generate(
@@ -100,21 +84,57 @@ final pageId = ResourceId.generate(
 
 // 3. The full path is included in the ID
 print(pageId); 
-// Output: books/AHM6A83HENMP~/pages/RBY538159M06P4YXT~
+// Output: books/BKB3XYT465KZ69/pages/3N18Y6V9T0A2W4S~
 ```
 
-### 6. Store in a Database
-While the `toString()` value is great for transport or in a key-value database, you can store the raw bytes in databases like MySQL and Postgres for further efficiency.
+### 4. Storing in a Database
+`ResourceId` provides multiple ways to get the raw identifier for efficient storage.
+
+#### Option A: Relational Database (BIGINT)
+This is the most performant option for relational databases, as they are highly optimized for indexing and joining on integer types.
 
 ```dart
-final id = ResourceId.generate(resourceType: 'users');
+final id = ResourceId.generate(resourceType: 'users', sizeInBytes: 8);
 
-// For BINARY or BLOB columns:
-final Uint8List bytesToStore = id.bytes;
-
-// For BIGINT columns (if using 8-byte IDs):
+// Store in a BIGINT column
 final BigInt intToStore = id.asBigInt;
 
-// For Key Value database
-String String stringToStore = id.canonicalValue;
+// Reconstruct from the database value
+final reconstructedId = ResourceId.fromBigInt(
+  resourceType: 'users',
+  value: intToStore,
+  sizeInBytes: 8, // Provide the known, fixed size for this resource type
+);
+```
+
+#### Option B: Relational Database (BINARY)
+This is the best choice for IDs larger than 8 bytes (64 bits).
+
+```dart
+final id = ResourceId.generate(resourceType: 'sessions', sizeInBytes: 16);
+
+// Store in a BINARY(16) or BLOB column
+final Uint8List bytesToStore = id.bytes;
+
+// Reconstruct from the database value
+final reconstructedId = ResourceId.fromBytes(
+  resourceType: 'sessions',
+  bytes: bytesToStore,
+);
+```
+
+#### Option C: Key-Value Store (String)
+For databases like Firestore or DynamoDB, you can store the pure Base32 value.
+
+```dart
+final id = ResourceId.generate(resourceType: 'invoices');
+
+// Store in a string field
+final String valueToStore = id.value;
+
+// Reconstruct from the database value
+final reconstructedId = ResourceId.fromValue(
+  resourceType: 'invoices',
+  value: valueToStore,
+);
 ```

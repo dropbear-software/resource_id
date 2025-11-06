@@ -46,7 +46,8 @@ final class ResourceId {
   ///
   /// [resourceType] is the collection name (e.g., "books").
   /// [parent] is an optional parent ID for hierarchical resources.
-  /// [sizeInBytes] defaults to 8 (64 bits), suitable for most resources.
+  /// [sizeInBytes] defaults to 8 (64 bits), which is suitable for storage
+  /// in a database `BIGINT` column and is recommended for most resources.
   /// For globally unique IDs (like UUIDs), 15 or 16 bytes (120-128 bits)
   /// is recommended.
   factory ResourceId.generate({
@@ -108,7 +109,6 @@ final class ResourceId {
     final checksumChar = idWithChecksum[idWithChecksum.length - 1];
 
     // Decode using the "friendly" Crockford's codec.
-    // We assume the codec handles hyphens, case, I/L/O, etc.
     final Uint8List bytes;
     try {
       bytes = _codec.decode(encodedValue);
@@ -132,14 +132,109 @@ final class ResourceId {
     );
   }
 
-  /// Returns the pure Base32-encoded value without the checksum.
+  /// Reconstructs a [ResourceId] from its raw bytes.
   ///
-  /// Useful for storing in a database as a string.
-  String get canonicalValue => _codec.encode(bytes);
+  /// This is useful when retrieving an ID from a database that stores it
+  /// as a `BINARY` or `BLOB` type.
+  factory ResourceId.fromBytes({
+    required String resourceType,
+    required Uint8List bytes,
+    ResourceId? parent,
+  }) {
+    return ResourceId._(
+      resourceType: resourceType,
+      bytes: bytes,
+      parent: parent,
+    );
+  }
+
+  /// Reconstructs a [ResourceId] from a [BigInt].
+  ///
+  /// This is useful when retrieving an ID from a database that stores it
+  /// as a `BIGINT` type, which is often more performant for indexing and
+  /// joins than a `BINARY` type.
+  ///
+  /// ## Why is `sizeInBytes` required?
+  ///
+  /// When converting a byte array to an integer, information about leading
+  /// zeros is lost. For example, `[0, 0, 1]` and `[1]` both become `BigInt(1)`.
+  /// To ensure the original byte array can be perfectly reconstructed, you
+  /// must provide the original fixed size of the identifier.
+  ///
+  /// It is best practice to use a fixed byte size for all identifiers of a
+  /// specific [resourceType].
+  ///
+  /// Example:
+  /// ```dart
+  /// const USER_ID_SIZE = 8;
+  ///
+  /// // Store in DB
+  /// final id = ResourceId.generate(resourceType: 'users', sizeInBytes: USER_ID_SIZE);
+  /// final bigIntValue = id.asBigInt;
+  ///
+  /// // Retrieve from DB
+  /// final reconstructedId = ResourceId.fromBigInt(
+  ///   resourceType: 'users',
+  ///   value: bigIntValue,
+  ///   sizeInBytes: USER_ID_SIZE, // Provide the known, fixed size
+  /// );
+  /// ```
+  factory ResourceId.fromBigInt({
+    required String resourceType,
+    required BigInt value,
+    required int sizeInBytes,
+    ResourceId? parent,
+  }) {
+    final hex = value.toRadixString(16).padLeft(sizeInBytes * 2, '0');
+    if (hex.length > sizeInBytes * 2) {
+      throw ArgumentError(
+        'BigInt value is too large for the specified sizeInBytes.',
+      );
+    }
+
+    final bytes = _hexToBytes(hex);
+    return ResourceId._(
+      resourceType: resourceType,
+      bytes: bytes,
+      parent: parent,
+    );
+  }
+
+  /// Reconstructs a [ResourceId] from its Base32-encoded [value].
+  ///
+  /// This is the counterpart to the [value] getter and is useful when
+  /// retrieving an ID from a key-value store that stores the pure
+  /// identifier value as a string.
+  factory ResourceId.fromValue({
+    required String resourceType,
+    required String value,
+    ResourceId? parent,
+  }) {
+    final bytes = _codec.decode(value);
+    return ResourceId._(
+      resourceType: resourceType,
+      bytes: bytes,
+      parent: parent,
+    );
+  }
+
+  /// The size of the identifier in bytes.
+  int get sizeInBytes => bytes.length;
+
+  /// Returns the pure Base32-encoded value without the prefix or checksum.
+  ///
+  /// Useful for storing in a key-value database as a string.
+  /// To reconstruct the ID, use the [ResourceId.fromValue] factory.
+  String get value => _codec.encode(bytes);
 
   /// Returns the raw byte value as a [BigInt].
   ///
-  /// Useful for storing in a database as a numeric type.
+  /// Useful for storing in a database as a numeric type (e.g., `BIGINT`)
+  /// for improved indexing and query performance.
+  ///
+  /// When converting back to a [ResourceId], you must use the
+  /// [ResourceId.fromBigInt] constructor and provide the original `sizeInBytes`
+  /// to ensure the ID is reconstructed correctly.
   BigInt get asBigInt {
     final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
     return BigInt.parse(hex, radix: 16);
@@ -182,6 +277,17 @@ final class ResourceId {
   /// Encodes the checksum value (0-36) into its special character.
   static String _getChecksumCharacter(int checksumValue) {
     return _checksumAlphabet[checksumValue.abs()];
+  }
+
+  /// Converts a hex string to a [Uint8List].
+  static Uint8List _hexToBytes(String hex) {
+    final bytes = <int>[];
+    for (var i = 0; i < hex.length; i += 2) {
+      final byteString = hex.substring(i, i + 2);
+      final byte = int.parse(byteString, radix: 16);
+      bytes.add(byte);
+    }
+    return Uint8List.fromList(bytes);
   }
 
   /// Returns the full string representation, suitable for JSON serialization.
