@@ -23,7 +23,6 @@
       };
       # Runs when a workspace is (re)started
       onStart= {
-        run-server = "dart run watcher.dart";
       };
     };
   };
