@@ -5,7 +5,7 @@ repository: https://github.com/dropbear-software/resource_id
 issue_tracker: https://github.com/dropbear-software/resource_id/issues
 
 environment:
-  sdk: ^3.9.3
+  sdk: ^3.9.0
 
 # Add regular dependencies here.
 dependencies:
