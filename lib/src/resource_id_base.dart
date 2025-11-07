@@ -259,9 +259,15 @@ final class ResourceId {
   /// When converting back to a [ResourceId], you must use the
   /// [ResourceId.fromBigInt] constructor and provide the original `sizeInBytes`
   /// to ensure the ID is reconstructed correctly.
-  BigInt get asBigInt {
+  /// Calculates the checksum value (0-36) from the raw bytes.
+  static int _calculateChecksum(Uint8List bytes) {
+    // 1. Convert the byte buffer into a BigInt value.
     final hex = bytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
-    return BigInt.parse(hex, radix: 16);
+    final intValue = BigInt.parse(hex, radix: 16);
+
+    // 2. Calculate the remainder after dividing by 37.
+    final remainder = intValue % BigInt.from(37);
+    return remainder.toInt();
   }
 
   /// Serializes the [ResourceId] into its full string representation,
