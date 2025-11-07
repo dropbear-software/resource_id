@@ -32,7 +32,7 @@ Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  resource_id: ^1.0.0 # Check pub.dev for latest version
+  resource_id: ^0.1.0 # Check pub.dev for latest version
 ```
 
 Then, import the package in your Dart file:
