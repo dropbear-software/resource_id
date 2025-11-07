@@ -5,6 +5,19 @@ void main() {
   group('ResourceId', () {
     const validIdFullString = 'books/BKB3XYT465KZ69';
 
+    test('Throws ArgumentError if sizeInBytes is 0 when generating', () {
+      expect(
+        () => ResourceId.generate(resourceType: 'books', sizeInBytes: 0),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'message',
+            contains('Must be at least 1'),
+          ),
+        ),
+      );
+    });
+
     test('Can be generated', () {
       final id = ResourceId.generate(resourceType: 'books');
       expect(id, isA<ResourceId>());

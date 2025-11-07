@@ -55,6 +55,13 @@ final class ResourceId {
     ResourceId? parent,
     int sizeInBytes = 8,
   }) {
+    if (sizeInBytes < 1) {
+      throw ArgumentError.value(
+        sizeInBytes,
+        'sizeInBytes',
+        'Must be at least 1',
+      );
+    }
     // Use a cryptographically secure random number generator.
     final random = Random.secure();
     final bytes = Uint8List(sizeInBytes);
