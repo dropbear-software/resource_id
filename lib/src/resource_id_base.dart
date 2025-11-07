@@ -192,6 +192,13 @@ final class ResourceId {
     required int sizeInBytes,
     ResourceId? parent,
   }) {
+    if (sizeInBytes < 1) {
+      throw ArgumentError.value(
+        sizeInBytes,
+        'sizeInBytes',
+        'Must be at least 1',
+      );
+    }
     final hex = value.toRadixString(16).padLeft(sizeInBytes * 2, '0');
     if (hex.length > sizeInBytes * 2) {
       throw ArgumentError(

@@ -161,6 +161,26 @@ void main() {
         expect(reconstructedId, equals(originalId));
       });
 
+      test(
+        'Throws ArgumentError if sizeInBytes is 0 when reconstructing from BigInt',
+        () {
+          expect(
+            () => ResourceId.fromBigInt(
+              resourceType: 'products',
+              value: BigInt.from(123),
+              sizeInBytes: 0,
+            ),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Must be at least 1'),
+              ),
+            ),
+          );
+        },
+      );
+
       test('Can be reconstructed from value string', () {
         final originalId = ResourceId.generate(resourceType: 'invoices');
 
