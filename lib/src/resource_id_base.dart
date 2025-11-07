@@ -148,6 +148,13 @@ final class ResourceId {
     required Uint8List bytes,
     ResourceId? parent,
   }) {
+    if (bytes.isEmpty) {
+      throw ArgumentError.value(
+        bytes,
+        'bytes',
+        'Cannot be empty. Must contain at least 1 byte.',
+      );
+    }
     return ResourceId._(
       resourceType: resourceType,
       bytes: bytes,
@@ -224,6 +231,9 @@ final class ResourceId {
     required String value,
     ResourceId? parent,
   }) {
+    if (value.isEmpty) {
+      throw ArgumentError.value(value, 'value', 'Can not be empty');
+    }
     final bytes = _codec.decode(value);
     return ResourceId._(
       resourceType: resourceType,

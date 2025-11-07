@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:resource_id/resource_id.dart';
 import 'package:test/test.dart';
 
@@ -175,6 +177,41 @@ void main() {
                 (e) => e.message,
                 'message',
                 contains('Must be at least 1'),
+              ),
+            ),
+          );
+        },
+      );
+
+      test(
+        'Throws ArgumentError if value is empty when reconstructing from value',
+        () {
+          expect(
+            () => ResourceId.fromValue(resourceType: 'products', value: ''),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Can not be empty'),
+              ),
+            ),
+          );
+        },
+      );
+
+      test(
+        'Throws ArgumentError if bytes is less than 1 byte when reconstructing fromBytes',
+        () {
+          expect(
+            () => ResourceId.fromBytes(
+              resourceType: 'products',
+              bytes: Uint8List(0),
+            ),
+            throwsA(
+              isA<ArgumentError>().having(
+                (e) => e.message,
+                'message',
+                contains('Must contain at least 1 byte'),
               ),
             ),
           );
