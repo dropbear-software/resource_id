@@ -1,3 +1,7 @@
+[![pub package](https://img.shields.io/pub/v/base32_codec.svg)](https://pub.dev/packages/resource_id)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Open in Firebase Studio](https://cdn.firebasestudio.dev/btn/open_light_20.svg)](https://studio.firebase.google.com/import?url=https%3A%2F%2Fgithub.com%2Fdropbear-software%2Fresource_id)
+
 # ResourceId
 
 A Dart package for creating, parsing, and validating robust, immutable, and URL-safe resource identifiers.
