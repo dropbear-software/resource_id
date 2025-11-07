@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
+  <meta name="description" content="resource_id API docs, for the Dart programming language.">
+  <title>resource_id - Dart API docs</title>
+
+
+  
+  <link rel="preconnect" href="https://fonts.gstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+  
+  <link rel="stylesheet" href="static-assets/github.css?v1">
+  <link rel="stylesheet" href="static-assets/styles.css?v1">
+  <link rel="icon" href="static-assets/favicon.png?v1">
+  
+</head>
+
+<body data-base-href="" data-using-base-href="false" class="light-theme">
+<div id="overlay-under-drawer"></div>
+<header id="title">
+  <span id="sidenav-left-toggle" class="material-symbols-outlined" role="button" tabindex="0">menu</span>
+  <ol class="breadcrumbs gt-separated dark hidden-xs">
+    <li class="self-crumb">resource_id package</li>
+  </ol>
+  <div class="self-name">resource_id</div>
+  <form class="search navbar-right" role="search">
+    <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+  <button class="toggle" id="theme-button" title="Toggle between light and dark mode" aria-label="Light and dark mode toggle">
+    <span id="dark-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      dark_mode
+    </span>
+    <span id="light-theme-button" class="material-symbols-outlined" aria-hidden="true">
+      light_mode
+    </span>
+  </button>
+</header>
+<main>
+  <div id="dartdoc-main-content" class="main-content">
+      
+<section class="desc markdown">
+  <h1 id="resourceid">ResourceId</h1>
+<p>A Dart package for creating, parsing, and validating robust, immutable, and URL-safe resource identifiers.</p>
+<p>This package provides an immutable <code>ResourceId</code> class that enforces modern API design principles. It generates prefixed, URL-safe identifiers (e.g., <code>books/9V233V10702ETQW3S1WKTZ~</code>) that are easy to read, copy, and debug, with built-in checksums to prevent typos.</p>
+<p>This implementation is based on the strong recommendations for great resource identifiers in the book <a href="https://www.manning.com/books/api-design-patterns">API Design Patterns</a> by J.J Geewax.</p>
+<h2 id="why-use-resourceid">Why use ResourceId?</h2>
+<p>While it can be tempting to use simple <code>String</code>s or <code>UUID</code>s for identifiers, they often fall short in real-world applications. This package solves common problems by providing IDs that are:</p>
+<ul>
+<li><strong>Type-Safe:</strong> Prevents you from accidentally using a <code>userId</code> where a <code>bookId</code> was expected.</li>
+<li><strong>Prefix-Aware:</strong> The resource type is part of the ID (e.g., <code>books/...</code>), making debugging and logging much clearer.</li>
+<li><strong>Typo-Proof:</strong> A built-in checksum immediately catches typos or copy-paste errors during parsing, preventing invalid queries.</li>
+<li><strong>Human-Readable:</strong> Uses Crockford's Base32, an encoding designed to avoid ambiguous characters (like <code>I</code>, <code>L</code>, <code>O</code>, and <code>U</code>), making IDs easier for humans to read and transcribe.</li>
+</ul>
+<h2 id="features">Features</h2>
+<ul>
+<li><strong>Immutable &amp; Type-Safe:</strong> Enforces correctness at compile time.</li>
+<li><strong>Prefix-Aware:</strong> Includes the resource type (e.g., <code>books/</code>) in the ID, preventing ID-mixing bugs.</li>
+<li><strong>Checksum Validation:</strong> The final character is a <code>mod-37</code> checksum. The <code>parse</code> method automatically validates this.</li>
+<li><strong>Crockford's Base32 Encoding:</strong> Uses a highly readable, URL-safe character set.</li>
+<li><strong>Friendly Parsing:</strong> The parser is case-insensitive and ignores hyphens, allowing for more human-readable formats like <code>books/bkb3-xyt4-65kz-69</code>.</li>
+<li><strong>Hierarchical Support:</strong> Natively supports parent-child relationships (e.g., <code>books/1/pages/2</code>).</li>
+<li><strong>Database-First Serialization:</strong> Easily and efficiently serialize to <code>Uint8List</code> (for <code>BINARY</code>), <code>BigInt</code> (for <code>BIGINT</code>), or a pure <code>String</code> (for key-value stores) and reconstruct with confidence.</li>
+<li><strong>Secure Generation:</strong> Uses a cryptographically secure random number generator.</li>
+</ul>
+<h2 id="getting-started">Getting Started</h2>
+<p>Add the package to your <code>pubspec.yaml</code>:</p>
+<pre class="language-yaml"><code class="language-yaml">dependencies:
+  resource_id: ^0.1.0 # Check pub.dev for latest version
+</code></pre>
+<p>Then, import the package in your Dart file:</p>
+<pre class="language-dart"><code class="language-dart">import 'package:resource_id/resource_id.dart';
+</code></pre>
+<h2 id="usage">Usage</h2>
+<h3 id="1-generating-a-new-id">1. Generating a New ID</h3>
+<p>Use <code>ResourceId.generate()</code> to create a new, secure identifier. The default size of 8 bytes is recommended for most resources as it fits perfectly in a database <code>BIGINT</code> column.</p>
+<pre class="language-dart"><code class="language-dart">// Generate a new ID for a "books" collection
+final bookId = ResourceId.generate(resourceType: 'books');
+
+// The toString() method includes the type prefix and checksum
+print(bookId);
+// Output: books/8A1B2C3D4E5F6G7H8J~ (random part will vary)
+</code></pre>
+<h3 id="2-parsing-and-validating-an-id">2. Parsing and Validating an ID</h3>
+<p>Use <code>ResourceId.parse()</code> to convert a string back into a <code>ResourceId</code>. The checksum is validated automatically, throwing a <code>FormatException</code> if there's a typo.</p>
+<pre class="language-dart"><code class="language-dart">try {
+  // Note the typo: 'P' was mistyped as 'A'
+  final badId = 'books/BKB3XYT465KZ6A'; 
+  ResourceId.parse(badId);
+} on FormatException catch (e) {
+  print(e.message);
+  // Output: Invalid identifier: Checksum mismatch. Possible typo.
+}
+</code></pre>
+<h3 id="3-creating-hierarchical-ids">3. Creating Hierarchical IDs</h3>
+<p>Pass the <code>parent</code> ID during generation to create a child resource.</p>
+<pre class="language-dart"><code class="language-dart">// 1. Create the parent ID
+final bookId = ResourceId.parse('books/BKB3XYT465KZ69');
+
+// 2. Generate a child ID, passing the parent
+final pageId = ResourceId.generate(
+  resourceType: 'pages',
+  parent: bookId,
+);
+
+// 3. The full path is included in the ID
+print(pageId); 
+// Output: books/BKB3XYT465KZ69/pages/3N18Y6V9T0A2W4S~
+</code></pre>
+<h3 id="4-storing-in-a-database">4. Storing in a Database</h3>
+<p><code>ResourceId</code> provides multiple ways to get the raw identifier for efficient storage.</p>
+<h4 id="option-a-relational-database-bigint">Option A: Relational Database (BIGINT)</h4>
+<p>This is the most performant option for relational databases, as they are highly optimized for indexing and joining on integer types.</p>
+<pre class="language-dart"><code class="language-dart">final id = ResourceId.generate(resourceType: 'users', sizeInBytes: 8);
+
+// Store in a BIGINT column
+final BigInt intToStore = id.asBigInt;
+
+// Reconstruct from the database value
+final reconstructedId = ResourceId.fromBigInt(
+  resourceType: 'users',
+  value: intToStore,
+  sizeInBytes: 8, // Provide the known, fixed size for this resource type
+);
+</code></pre>
+<h4 id="option-b-relational-database-binary">Option B: Relational Database (BINARY)</h4>
+<p>This is the best choice for IDs larger than 8 bytes (64 bits).</p>
+<pre class="language-dart"><code class="language-dart">final id = ResourceId.generate(resourceType: 'sessions', sizeInBytes: 16);
+
+// Store in a BINARY(16) or BLOB column
+final Uint8List bytesToStore = id.bytes;
+
+// Reconstruct from the database value
+final reconstructedId = ResourceId.fromBytes(
+  resourceType: 'sessions',
+  bytes: bytesToStore,
+);
+</code></pre>
+<h4 id="option-c-key-value-store-string">Option C: Key-Value Store (String)</h4>
+<p>For databases like Firestore or DynamoDB, you can store the pure Base32 value.</p>
+<pre class="language-dart"><code class="language-dart">final id = ResourceId.generate(resourceType: 'invoices');
+
+// Store in a string field
+final String valueToStore = id.value;
+
+// Reconstruct from the database value
+final reconstructedId = ResourceId.fromValue(
+  resourceType: 'invoices',
+  value: valueToStore,
+);
+</code></pre>
+<h2 id="comparison-with-uuids">Comparison with UUIDs</h2>
+<p>UUIDs (Universally Unique Identifiers) are a common standard for generating unique IDs. While they are an excellent choice for ensuring global uniqueness, <code>ResourceId</code> offers several practical advantages for application development:</p>
+<table>
+<thead>
+<tr>
+<th align="left">Feature</th>
+<th align="left">Standard UUID</th>
+<th align="left">ResourceId</th>
+<th align="left">Benefit</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left"><strong>Readability</strong></td>
+<td align="left"><code>123e4567-e89b-12d3-a456-426655440000</code></td>
+<td align="left"><code>books/BKB3X-YT465-KZ69</code></td>
+<td align="left">Easier for humans to read, transcribe, and share. Uses a character set that avoids common visual ambiguities.</td>
+</tr>
+<tr>
+<td align="left"><strong>Typo Detection</strong></td>
+<td align="left">None</td>
+<td align="left">Built-in Checksum</td>
+<td align="left"><code>ResourceId.parse()</code> instantly detects typos or copy-paste errors, preventing "not found" errors from ever hitting your database.</td>
+</tr>
+<tr>
+<td align="left"><strong>Resource Context</strong></td>
+<td align="left">No</td>
+<td align="left">Prefixed (<code>books/...</code>)</td>
+<td align="left">Identifiers are self-describing, which makes debugging, logging, and reading API requests much clearer.</td>
+</tr>
+<tr>
+<td align="left"><strong>Size Flexibility</strong></td>
+<td align="left">Fixed at 128 bits</td>
+<td align="left">Flexible (e.g., 64 bits)</td>
+<td align="left">Allows you to choose a smaller (1 byte minimum), more performant size (like a <code>BIGINT</code>) for resources that don't require global uniqueness, optimizing database performance.</td>
+</tr>
+</tbody>
+</table>
+<p>While you can absolutely use a 128-bit <code>ResourceId</code> to wrap a UUID's raw bytes to get the best of both worlds, for most application use cases, a 64-bit <code>ResourceId</code> provides a more ergonomic, safer, and often more performant solution.</p>
+</section>
+
+
+      <section class="summary">
+          <h2>Libraries</h2>
+        <dl>
+          <dt id="resource_id">
+  <span class="name"><a href="resource_id/">resource_id</a></span> 
+
+</dt>
+<dd>A Dart package for creating, parsing, and validating robust, immutable,
+and URL-safe resource identifiers.
+</dd>
+
+        </dl>
+      </section>
+  </div> <!-- /.main-content -->
+  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+<header id="header-search-sidebar" class="hidden-l">
+  <form class="search-sidebar" role="search">
+    <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
+  </form>
+</header>
+<ol class="breadcrumbs gt-separated dark hidden-l" id="sidebar-nav">
+    <li class="self-crumb">resource_id package</li>
+</ol>
+
+    <h5 class="hidden-xs"><span class="package-name">resource_id</span> <span class="package-kind">package</span></h5>
+    <ol>
+      <li class="section-title">Libraries</li>
+      <li><a href="resource_id/">resource_id</a></li>
+</ol>
+
+  </div>
+  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  </div>
+</main>
+<footer>
+  <span class="no-break">
+    resource_id
+      0.1.0
+  </span>
+  
+</footer>
+
+
+<script src="static-assets/highlight.pack.js?v1"></script>
+<script src="static-assets/docs.dart.js"></script>
+
+</body>
+</html>
+
