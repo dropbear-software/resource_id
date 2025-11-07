@@ -36,11 +36,10 @@ packages:
   base32_codec:
     dependency: "direct main"
     description:
-      path: "."
-      ref: main
-      resolved-ref: "5bd288a921498f35f4988e7eb39504706afdfbe0"
-      url: "https://github.com/dropbear-software/base32_codec.git"
-    source: git
+      name: base32_codec
+      sha256: "4195e3a5993703dd9e06c4d47bdb4304879f82407f6d4ecc433937bdf72addb6"
+      url: "https://pub.dev"
+    source: hosted
     version: "1.0.0"
   boolean_selector:
     dependency: transitive

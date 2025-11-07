@@ -1,7 +1,6 @@
 name: resource_id
 description: A Dart package for creating, parsing, and validating robust and immutable resource identifiers.
 version: 0.1.0
-publish_to: none
 repository: https://github.com/dropbear-software/resource_id
 
 environment:
@@ -9,10 +8,7 @@ environment:
 
 # Add regular dependencies here.
 dependencies:
-  base32_codec:
-    git: 
-      url: https://github.com/dropbear-software/base32_codec.git
-      ref: main
+  base32_codec: ^1.0.0
   meta: ^1.17.0
 
 dev_dependencies:
