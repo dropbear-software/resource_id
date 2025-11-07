@@ -37,8 +37,8 @@ packages:
     dependency: "direct main"
     description:
       path: "."
-      ref: HEAD
-      resolved-ref: "0b607a1cff087c72d4f38b060d2dcccab4af7a41"
+      ref: main
+      resolved-ref: "5bd288a921498f35f4988e7eb39504706afdfbe0"
       url: "https://github.com/dropbear-software/base32_codec.git"
     source: git
     version: "1.0.0"

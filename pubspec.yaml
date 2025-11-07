@@ -10,7 +10,9 @@ environment:
 # Add regular dependencies here.
 dependencies:
   base32_codec:
-    git: https://github.com/dropbear-software/base32_codec.git
+    git: 
+      url: https://github.com/dropbear-software/base32_codec.git
+      ref: main
   meta: ^1.17.0
 
 dev_dependencies:
