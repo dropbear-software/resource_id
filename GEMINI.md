@@ -20,6 +20,8 @@ The design of this library is based on a set of principles for creating "good" i
 
 *   **Unpredictability**: To enhance security, identifiers should not be sequential or predictable. The library generates identifiers from a large, random keyspace, making it difficult for attackers to guess valid IDs and probe for vulnerabilities.
 
+*   **Minimum Size Enforcement**: To ensure the validity and usefulness of generated identifiers, the library enforces a minimum `sizeInBytes` of 1 for both generation and reconstruction from `BigInt`. This prevents the creation of 0-byte identifiers that lack unique information.
+
 The project is well-documented, with a detailed `README.md` that explains the rationale and usage, and the source code itself contains clear documentation comments.
 
 ## Building and Running
