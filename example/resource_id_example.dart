@@ -16,15 +16,16 @@ void main() {
   print('\n--- Parsing & Validation ---');
   // 3. Parsing valid input
   try {
-    // Note: Hyphens are ignored, casing is flexible
-    final input = 'users/sap-85-YQD-F46G-2bhFW5N7K4DJD';
-
-    // Let's parse the userId we just generated to be sure
+    // Let's parse the userId we just generated to be sure it's valid.
     final parsed = ResourceId.parse(userId.toString());
-    final isValid = ResourceId.isValid(input);
-    print('Parsed ID successfully: $parsed');
+    print('Parsed generated ID successfully: $parsed');
     print('  Equality Check: ${parsed == userId ? "Matches" : "Mismatch"}');
-    print('  Case Insensitive Check Passes: $isValid');
+
+    // Now, let's create a "messy" version of the same ID to show parsing flexibility.
+    final messyString = userId.toString().toLowerCase().replaceRange(10, 10, '-');
+    final parsedMessy = ResourceId.parse(messyString);
+    print('Parsed messy ID successfully: $parsedMessy');
+    print('  Equality Check with messy parse: ${parsedMessy == userId ? "Matches" : "Mismatch"}');
   } catch (e) {
     print('Error parsing: $e');
   }
