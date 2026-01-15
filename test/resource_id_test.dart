@@ -22,10 +22,6 @@ void main() {
     });
 
     test('parse handles valid strings', () {
-      // Create a known ID to test.
-      // Bytes [1, 2, 3]. Hex 010203 = 66051. 66051 % 37 = 3. Checksum char '3'.
-      // Base32 Crockford of [1, 2, 3] -> "040G6" (approx, depends on implementation details of base32_codec)
-      // Let's rely on the library's consistency.
       final generated = ResourceId.generate();
       final stringRep = generated.toString();
 
@@ -35,9 +31,6 @@ void main() {
     });
 
     test('parse handles hyphens and lowercase', () {
-      // Assuming 'abcde-12345' is valid base32 payload.
-      // We need a valid checksum.
-      // Let's generate one, verify it, then mangle string and re-parse.
       final id = ResourceId.generate();
       final baseString = id.toString();
       final checksum = baseString.substring(baseString.length - 1);
@@ -60,12 +53,8 @@ void main() {
     });
 
     test('parse handles complex paths as type', () {
-      // "books/123/pages/ID"
-      // We assume everything before last ID is type.
       final id = ResourceId.generate();
-      // valid ID string
       final idStr = id.toString();
-      // construct complex path
       final path = 'books/123/pages/$idStr';
 
       final parsed = ResourceId.parse(path);
@@ -97,16 +86,7 @@ void main() {
     });
 
     test('parse throws on invalid characters in payload', () {
-      // 'U' is invalid in Crockford payload (it's only in checksum or mapped to 1?? No, U excluded for profanity)
-      // Actually Crockford spec excludes U. base32_codec should likely fail or treat as error?
-      // Or maybe it maps?
-      // "I, L, O, and U. While the first three are left out due to potential confusion ... the third is left out for another interesting reason: profanity."
-      // So 'U' in payload should fail.
-      // However, 'U' IS valid in the Checksum digit (index 36).
-      // Let's try to put 'U' in the *body*.
-
-      // We need a string that decodes to bytes, then verify checksum.
-      // If base32_codec throws, we catch FormatException.
+      // 'U' is excluded from the Crockford Base32 payload alphabet.
       expect(() => ResourceId.parse('UUUUU0'), throwsFormatException);
     });
 
@@ -119,9 +99,9 @@ void main() {
       expect(ResourceId.isValid('invalid'), isFalse);
     });
 
-    test('toBytes returns copy/unmodifiable', () {
+    test('bytes getter returns unmodifiable list', () {
       final id = ResourceId.generate();
-      final bytes = id.toBytes();
+      final bytes = id.bytes;
       expect(() => bytes[0] = 0, throwsUnsupportedError);
     });
   });

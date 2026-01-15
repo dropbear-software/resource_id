@@ -22,11 +22,8 @@ class ResourceId {
   ResourceId._(this.type, List<int> bytes, this.checksumChar)
     : _bytes = List.unmodifiable(bytes);
 
-  /// Returns a copy of the raw bytes.
-  List<int> get bytes => _bytes;
-
   /// Returns the raw bytes for storage.
-  List<int> toBytes() => _bytes;
+  List<int> get bytes => _bytes;
 
   /// Generates a new random [ResourceId].
   ///
