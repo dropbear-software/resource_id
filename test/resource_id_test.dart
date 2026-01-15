@@ -1,273 +1,128 @@
-import 'dart:typed_data';
-
 import 'package:resource_id/resource_id.dart';
 import 'package:test/test.dart';
 
 void main() {
   group('ResourceId', () {
-    const validIdFullString = 'books/BKB3XYT465KZ69';
-
-    test('Throws ArgumentError if sizeInBytes is 0 when generating', () {
-      expect(
-        () => ResourceId.generate(resourceType: 'books', sizeInBytes: 0),
-        throwsA(
-          isA<ArgumentError>().having(
-            (e) => e.message,
-            'message',
-            contains('Must be at least 1'),
-          ),
-        ),
-      );
+    test('generate creates valid IDs', () {
+      final id = ResourceId.generate();
+      expect(id.bytes, hasLength(15)); // Default length
+      expect(id.checksumChar, isNotNull);
+      expect(id.toString(), matches(RegExp(r'^[0-9A-Z]+[*~$=U0-9A-Z]$')));
     });
 
-    test('Can be generated', () {
-      final id = ResourceId.generate(resourceType: 'books');
-      expect(id, isA<ResourceId>());
-      expect(id.resourceType, 'books');
-      expect(id.parent, isNull);
+    test('generate accepts custom length', () {
+      final id = ResourceId.generate(byteLength: 5);
+      expect(id.bytes, hasLength(5));
     });
 
-    test('Can parse a valid ID string', () {
-      // Use a known-good generated ID to ensure checksum is valid
-      final generatedId = ResourceId.generate(resourceType: 'books');
-      final idString = generatedId.toString();
-
-      final id = ResourceId.parse(idString);
-
-      expect(id.resourceType, 'books');
-      expect(id.parent, isNull);
-      expect(id.bytes, equals(generatedId.bytes));
-      expect(id.toString(), equals(idString));
+    test('generate accepts type prefix', () {
+      final id = ResourceId.generate(type: 'users');
+      expect(id.type, 'users');
+      expect(id.toString(), startsWith('users/'));
     });
 
-    test('Throws FormatException for invalid checksum (detects typos)', () {
-      // This ID is valid, we will tamper with it
-      final id = ResourceId.parse(validIdFullString);
-      expect(id.toString(), validIdFullString);
+    test('parse handles valid strings', () {
+      // Create a known ID to test.
+      // Bytes [1, 2, 3]. Hex 010203 = 66051. 66051 % 37 = 3. Checksum char '3'.
+      // Base32 Crockford of [1, 2, 3] -> "040G6" (approx, depends on implementation details of base32_codec)
+      // Let's rely on the library's consistency.
+      final generated = ResourceId.generate();
+      final stringRep = generated.toString();
 
-      // Create a typo by changing a character in the value
-      const badId = 'books/BKB3XYT465KZ68'; // 9 -> 8
-
-      expect(
-        () => ResourceId.parse(badId),
-        throwsA(
-          isA<FormatException>().having(
-            (e) => e.message,
-            'message',
-            contains('Checksum mismatch'),
-          ),
-        ),
-      );
+      final parsed = ResourceId.parse(stringRep);
+      expect(parsed, equals(generated));
+      expect(parsed.type, generated.type);
     });
 
-    group('Friendly parser', () {
-      test('handles mixed case', () {
-        const messyId = 'books/bkb3xyt465kz69';
-        final id = ResourceId.parse(messyId);
-        expect(id.toString(), validIdFullString);
-      });
+    test('parse handles hyphens and lowercase', () {
+      // Assuming 'abcde-12345' is valid base32 payload.
+      // We need a valid checksum.
+      // Let's generate one, verify it, then mangle string and re-parse.
+      final id = ResourceId.generate();
+      final baseString = id.toString();
+      final checksum = baseString.substring(baseString.length - 1);
+      final payload = baseString.substring(0, baseString.length - 1);
 
-      test('handles hyphens', () {
-        const messyId = 'books/BKB3-XYT4-65KZ-69';
-        final id = ResourceId.parse(messyId);
-        expect(id.toString(), validIdFullString);
-      });
-
-      test('handles hyphens and mixed case', () {
-        const messyId = 'books/bkb3-xyt4-65kz-69';
-        final id = ResourceId.parse(messyId);
-        expect(id.toString(), validIdFullString);
-      });
+      // Insert hyphen
+      if (payload.length > 2) {
+        final mangled =
+            '${payload.substring(0, 2)}-${payload.substring(2)}$checksum';
+        final parsed = ResourceId.parse(mangled.toLowerCase());
+        expect(parsed.bytes, orderedEquals(id.bytes));
+      }
     });
 
-    test('Can create and parse hierarchical IDs', () {
-      final parentId = ResourceId.parse(validIdFullString);
-
-      // This part is random, so we can't test the exact string value
-      final childId = ResourceId.generate(
-        resourceType: 'pages',
-        parent: parentId,
-      );
-
-      final childIdString = childId.toString();
-      final parsedChild = ResourceId.parse(childIdString);
-
-      expect(childIdString, startsWith('$validIdFullString/pages/'));
-      expect(parsedChild.resourceType, 'pages');
-      expect(parsedChild.parent, isNotNull);
-      expect(parsedChild.parent, equals(parentId));
-      expect(parsedChild.parent?.resourceType, 'books');
-      expect(parsedChild.toString(), childIdString);
+    test('parse handles type prefixes', () {
+      final id = ResourceId.generate(type: 'books');
+      final parsed = ResourceId.parse(id.toString());
+      expect(parsed.type, 'books');
+      expect(parsed.bytes, id.bytes);
     });
 
-    group('Equality', () {
-      test('is case-insensitive', () {
-        final id1 = ResourceId.parse(validIdFullString);
-        final id2 = ResourceId.parse('books/bkb3xyt465kz69');
-        final id3 = ResourceId.parse(
-          'users/BKB3XYT465KZ69',
-        ); // Same bytes, different type
+    test('parse handles complex paths as type', () {
+      // "books/123/pages/ID"
+      // We assume everything before last ID is type.
+      final id = ResourceId.generate();
+      // valid ID string
+      final idStr = id.toString();
+      // construct complex path
+      final path = 'books/123/pages/$idStr';
 
-        expect(id1, equals(id2));
-        expect(id1.hashCode, equals(id2.hashCode));
-        expect(id1, isNot(equals(id3)));
-      });
-
-      test('ignores hyphens', () {
-        final id1 = ResourceId.parse(validIdFullString);
-        final id2 = ResourceId.parse('books/BKB3-XYT4-65KZ-69');
-
-        expect(id1, equals(id2));
-        expect(id1.hashCode, equals(id2.hashCode));
-      });
-
-      test('ignores both case and hyphens', () {
-        final id1 = ResourceId.parse(validIdFullString);
-        final id2 = ResourceId.parse('books/bkb3-xyt4-65kz-69');
-
-        expect(id1, equals(id2));
-        expect(id1.hashCode, equals(id2.hashCode));
-      });
+      final parsed = ResourceId.parse(path);
+      expect(parsed.type, 'books/123/pages');
+      expect(parsed.bytes, id.bytes);
     });
 
-    group('Database serialization', () {
-      test('Can be reconstructed from bytes', () {
-        final originalId = ResourceId.generate(resourceType: 'users');
+    test('parse handles hierarchical path with multiple IDs', () {
+      // Scenario: books/BOOK_ID/pages/PAGE_ID
+      final bookId = ResourceId.generate();
+      final pageId = ResourceId.generate();
 
-        // Simulate storing and retrieving
-        final bytes = originalId.bytes;
-        final reconstructedId = ResourceId.fromBytes(
-          resourceType: 'users',
-          bytes: bytes,
-        );
+      final path = 'books/$bookId/pages/$pageId';
+      final parsed = ResourceId.parse(path);
 
-        expect(reconstructedId, equals(originalId));
-      });
+      expect(parsed.type, 'books/$bookId/pages');
+      expect(parsed.bytes, pageId.bytes);
+      expect(parsed.checksumChar, pageId.checksumChar);
+    });
+    test('parse throws on invalid checksum', () {
+      final id = ResourceId.generate();
+      var str = id.toString();
+      // Replace last char with something else
+      final lastChar = str[str.length - 1];
+      final invalidLastChar = (lastChar == '0') ? '1' : '0';
+      str = str.substring(0, str.length - 1) + invalidLastChar;
 
-      test('Can be reconstructed from BigInt', () {
-        final originalId = ResourceId.generate(
-          resourceType: 'products',
-          sizeInBytes: 12, // Use a non-default size
-        );
-
-        // Simulate storing and retrieving
-        final bigIntValue = originalId.asBigInt;
-        final size = originalId.sizeInBytes;
-
-        final reconstructedId = ResourceId.fromBigInt(
-          resourceType: 'products',
-          value: bigIntValue,
-          sizeInBytes: size,
-        );
-
-        expect(reconstructedId, equals(originalId));
-      });
-
-      test(
-        'Throws ArgumentError if sizeInBytes is 0 when reconstructing from BigInt',
-        () {
-          expect(
-            () => ResourceId.fromBigInt(
-              resourceType: 'products',
-              value: BigInt.from(123),
-              sizeInBytes: 0,
-            ),
-            throwsA(
-              isA<ArgumentError>().having(
-                (e) => e.message,
-                'message',
-                contains('Must be at least 1'),
-              ),
-            ),
-          );
-        },
-      );
-
-      test(
-        'Throws ArgumentError if value is empty when reconstructing from value',
-        () {
-          expect(
-            () => ResourceId.fromValue(resourceType: 'products', value: ''),
-            throwsA(
-              isA<ArgumentError>().having(
-                (e) => e.message,
-                'message',
-                contains('Can not be empty'),
-              ),
-            ),
-          );
-        },
-      );
-
-      test(
-        'Throws ArgumentError if bytes is less than 1 byte when reconstructing fromBytes',
-        () {
-          expect(
-            () => ResourceId.fromBytes(
-              resourceType: 'products',
-              bytes: Uint8List(0),
-            ),
-            throwsA(
-              isA<ArgumentError>().having(
-                (e) => e.message,
-                'message',
-                contains('Must contain at least 1 byte'),
-              ),
-            ),
-          );
-        },
-      );
-
-      test('Can be reconstructed from value string', () {
-        final originalId = ResourceId.generate(resourceType: 'invoices');
-
-        // Simulate storing and retrieving for a key-value store
-        final valueString = originalId.value;
-        final reconstructedId = ResourceId.fromValue(
-          resourceType: 'invoices',
-          value: valueString,
-        );
-
-        expect(reconstructedId, equals(originalId));
-      });
-
-      test('Reconstruction with parent works correctly', () {
-        final parentId = ResourceId.generate(resourceType: 'customers');
-        final childId = ResourceId.generate(
-          resourceType: 'orders',
-          parent: parentId,
-        );
-
-        // From bytes
-        final reconstructedFromBytes = ResourceId.fromBytes(
-          resourceType: 'orders',
-          bytes: childId.bytes,
-          parent: parentId,
-        );
-        expect(reconstructedFromBytes, equals(childId));
-
-        // From BigInt
-        final reconstructedFromBigInt = ResourceId.fromBigInt(
-          resourceType: 'orders',
-          value: childId.asBigInt,
-          sizeInBytes: childId.sizeInBytes,
-          parent: parentId,
-        );
-        expect(reconstructedFromBigInt, equals(childId));
-
-        // From value
-        final reconstructedFromValue = ResourceId.fromValue(
-          resourceType: 'orders',
-          value: childId.value,
-          parent: parentId,
-        );
-        expect(reconstructedFromValue, equals(childId));
-      });
+      expect(() => ResourceId.parse(str), throwsFormatException);
     });
 
-    test('toString returns the full canonical path', () {
-      final id = ResourceId.parse(validIdFullString);
-      expect(id.toString(), validIdFullString);
+    test('parse throws on invalid characters in payload', () {
+      // 'U' is invalid in Crockford payload (it's only in checksum or mapped to 1?? No, U excluded for profanity)
+      // Actually Crockford spec excludes U. base32_codec should likely fail or treat as error?
+      // Or maybe it maps?
+      // "I, L, O, and U. While the first three are left out due to potential confusion ... the third is left out for another interesting reason: profanity."
+      // So 'U' in payload should fail.
+      // However, 'U' IS valid in the Checksum digit (index 36).
+      // Let's try to put 'U' in the *body*.
+
+      // We need a string that decodes to bytes, then verify checksum.
+      // If base32_codec throws, we catch FormatException.
+      expect(() => ResourceId.parse('UUUUU0'), throwsFormatException);
+    });
+
+    test('isValid returns true for valid IDs', () {
+      final id = ResourceId.generate();
+      expect(ResourceId.isValid(id.toString()), isTrue);
+    });
+
+    test('isValid returns false for invalid IDs', () {
+      expect(ResourceId.isValid('invalid'), isFalse);
+    });
+
+    test('toBytes returns copy/unmodifiable', () {
+      final id = ResourceId.generate();
+      final bytes = id.toBytes();
+      expect(() => bytes[0] = 0, throwsUnsupportedError);
     });
   });
 }

@@ -54,51 +54,32 @@
 
     <section class="multi-line-signature">
       
-      <span class="name ">ResourceId.generate</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="generate-param-resourceType"><span>required</span> <span class="type-annotation"><a href="https://api.dart.dev/stable/3.9.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">resourceType</span>, </span></li>
-<li><span class="parameter" id="generate-param-parent"><span class="type-annotation"><a href="../../resource_id/ResourceId-class.html">ResourceId</a>?</span> <span class="parameter-name">parent</span>, </span></li>
-<li><span class="parameter" id="generate-param-sizeInBytes"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.9.3/dart-core/int-class.html">int</a></span> <span class="parameter-name">sizeInBytes</span> = <span class="default-value">8</span>, </span></li>
+      <span class="name ">ResourceId.generate</span>(<wbr>{<ol class="parameter-list"> <li><span class="parameter" id="generate-param-type"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.9.4/dart-core/String-class.html">String</a>?</span> <span class="parameter-name">type</span>, </span></li>
+<li><span class="parameter" id="generate-param-byteLength"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.9.4/dart-core/int-class.html">int</a></span> <span class="parameter-name">byteLength</span> = <span class="default-value">15</span>, </span></li>
 </ol>})
     </section>
     
 <section class="desc markdown">
-  <p>Generates a new, cryptographically secure <a href="../../resource_id/ResourceId-class.html">ResourceId</a>.</p>
-<p>This is the recommended way to create new identifiers.</p>
-<p><code>resourceType</code> is the collection name (e.g., "books").
-<code>parent</code> is an optional parent ID for hierarchical resources.
-<code>sizeInBytes</code> defaults to 8 (64 bits), which is suitable for storage
-in a database <code>BIGINT</code> column and is recommended for most resources.
-For globally unique IDs (like UUIDs), 15 or 16 bytes (120-128 bits)
-is recommended.</p>
+  <p>Generates a new random <a href="../../resource_id/ResourceId-class.html">ResourceId</a>.</p>
+<p>The <code>type</code> is an optional resource type prefix.
+The <code>byteLength</code> determines the size of the random payload (defaults to 15, approx 120 bits of entropy).</p>
 </section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">factory ResourceId.generate({
-  required String resourceType,
-  ResourceId? parent,
-  int sizeInBytes = 8,
-}) {
-  if (sizeInBytes &lt; 1) {
-    throw ArgumentError.value(
-      sizeInBytes,
-      &#39;sizeInBytes&#39;,
-      &#39;Must be at least 1&#39;,
-    );
-  }
-  &#47;&#47; Use a cryptographically secure random number generator.
+  <pre class="language-dart"><code class="language-dart">factory ResourceId.generate({String? type, int byteLength = 15}) {
   final random = Random.secure();
-  final bytes = Uint8List(sizeInBytes);
-  for (var i = 0; i &lt; sizeInBytes; i++) {
+  final bytes = Uint8List(byteLength);
+  for (var i = 0; i &lt; byteLength; i++) {
     bytes[i] = random.nextInt(256);
   }
 
-  return ResourceId._(
-    resourceType: resourceType,
-    bytes: bytes,
-    parent: parent,
-  );
+  final checksumVal = calculateChecksum(bytes);
+  final checksumChar = getChecksumCharacter(checksumVal);
+
+  return ResourceId._(type, bytes, checksumChar);
 }</code></pre>
 </section>
 
@@ -127,7 +108,7 @@ is recommended.</p>
 <footer>
   <span class="no-break">
     resource_id
-      0.1.0
+      0.2.0
   </span>
   
 </footer>

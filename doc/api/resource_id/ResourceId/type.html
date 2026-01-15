@@ -4,8 +4,8 @@
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1, user-scalable=no">
-  <meta name="description" content="API docs for the toString method from the ResourceId class, for the Dart programming language.">
-  <title>toString method - ResourceId class - resource_id library - Dart API</title>
+  <meta name="description" content="API docs for the type property from the ResourceId class, for the Dart programming language.">
+  <title>type property - ResourceId class - resource_id library - Dart API</title>
 
 
   
@@ -27,9 +27,9 @@
     <li><a href="../../index.html">resource_id</a></li>
     <li><a href="../../resource_id/">resource_id.dart</a></li>
     <li><a href="../../resource_id/ResourceId-class.html">ResourceId</a></li>
-    <li class="self-crumb">toString method</li>
+    <li class="self-crumb">type property</li>
   </ol>
-  <div class="self-name">toString</div>
+  <div class="self-name">type</div>
   <form class="search navbar-right" role="search">
     <input type="text" id="search-box" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
   </form>
@@ -49,60 +49,33 @@
     data-above-sidebar="resource_id&#47;ResourceId-class-sidebar.html"
     data-below-sidebar="">
     <div>
-<h1><span class="kind-method">toString</span> method 
+<h1><span class="kind-property">type</span> property 
 </h1></div>
 
-    <section class="multi-line-signature">
-      
-  <div>
-    <ol class="annotation-list">
-        <li>@<a href="https://api.dart.dev/stable/3.9.4/dart-core/override-constant.html">override</a></li>
-    </ol>
-  </div>
-<span class="returntype"><a href="https://api.dart.dev/stable/3.9.4/dart-core/String-class.html">String</a></span>
-<span class="name ">toString</span>(<wbr>)
-
-      <div class="features"><span class="feature">override</span></div>
-
-    </section>
     
+      <section class="multi-line-signature">
+        
+        <a href="https://api.dart.dev/stable/3.9.4/dart-core/String-class.html">String</a>?
+        <span class="name ">type</span>
+        <div class="features"><span class="feature">final</span></div>
+
+      </section>
+      
 <section class="desc markdown">
-  <p>A string representation of this object.</p>
-<p>Some classes have a default textual representation,
-often paired with a static <code>parse</code> function (like <a href="https://api.dart.dev/stable/3.9.4/dart-core/int/parse.html">int.parse</a>).
-These classes will provide the textual representation as
-their string representation.</p>
-<p>Other classes have no meaningful textual representation
-that a program will care about.
-Such classes will typically override <code>toString</code> to provide
-useful information when inspecting the object,
-mainly for debugging or logging.</p>
+  <p>The optional type prefix (e.g., "books").</p>
 </section>
 
-
-    
+      
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">@override
-String toString() {
-  &#47;&#47; Encode bytes to Crockford Base32
-  final encoded = _codec.encode(Uint8List.fromList(_bytes));
-
-  &#47;&#47; Checksum is already stored, but ensure it matches casing if we want consistency.
-  &#47;&#47; Base32Codec output is usually uppercase.
-  final suffix = checksumChar;
-
-  if (type != null) {
-    return &#39;$type&#47;$encoded$suffix&#39;;
-  }
-  return &#39;$encoded$suffix&#39;;
-}</code></pre>
+  <pre class="language-dart"><code class="language-dart">final String? type;</code></pre>
 </section>
 
 
-  </div> <!-- /.main-content -->
-  <div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
-    <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
+    
+</div> <!-- /.main-content -->
+<div id="dartdoc-sidebar-left" class="sidebar sidebar-offcanvas-left">
+  <!-- The search input and breadcrumbs below are only responsively visible at low resolutions. -->
 <header id="header-search-sidebar" class="hidden-l">
   <form class="search-sidebar" role="search">
     <input type="text" id="search-sidebar" autocomplete="off" disabled class="form-control typeahead" placeholder="Loading search...">
@@ -112,13 +85,13 @@ String toString() {
     <li><a href="../../index.html">resource_id</a></li>
     <li><a href="../../resource_id/">resource_id</a></li>
     <li><a href="../../resource_id/ResourceId-class.html">ResourceId</a></li>
-    <li class="self-crumb">toString method</li>
+    <li class="self-crumb">type property</li>
 </ol>
 
-    <h5>ResourceId class</h5>
-    <div id="dartdoc-sidebar-left-content"></div>
-  </div><!--/.sidebar-offcanvas-->
-  <div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
+  <h5>ResourceId class</h5>
+  <div id="dartdoc-sidebar-left-content"></div>
+</div><!--/.sidebar-offcanvas-->
+<div id="dartdoc-sidebar-right" class="sidebar sidebar-offcanvas-right">
 </div><!--/.sidebar-offcanvas-->
 </main>
 <footer>

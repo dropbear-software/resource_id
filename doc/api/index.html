@@ -43,154 +43,77 @@
   <div id="dartdoc-main-content" class="main-content">
       
 <section class="desc markdown">
-  <h1 id="resourceid">ResourceId</h1>
-<p>A Dart package for creating, parsing, and validating robust, immutable, and URL-safe resource identifiers.</p>
-<p>This package provides an immutable <code>ResourceId</code> class that enforces modern API design principles. It generates prefixed, URL-safe identifiers (e.g., <code>books/9V233V10702ETQW3S1WKTZ~</code>) that are easy to read, copy, and debug, with built-in checksums to prevent typos.</p>
-<p>This implementation is based on the strong recommendations for great resource identifiers in the book <a href="https://www.manning.com/books/api-design-patterns">API Design Patterns</a> by J.J Geewax.</p>
-<h2 id="why-use-resourceid">Why use ResourceId?</h2>
-<p>While it can be tempting to use simple <code>String</code>s or <code>UUID</code>s for identifiers, they often fall short in real-world applications. This package solves common problems by providing IDs that are:</p>
-<ul>
-<li><strong>Type-Safe:</strong> Prevents you from accidentally using a <code>userId</code> where a <code>bookId</code> was expected.</li>
-<li><strong>Prefix-Aware:</strong> The resource type is part of the ID (e.g., <code>books/...</code>), making debugging and logging much clearer.</li>
-<li><strong>Typo-Proof:</strong> A built-in checksum immediately catches typos or copy-paste errors during parsing, preventing invalid queries.</li>
-<li><strong>Human-Readable:</strong> Uses Crockford's Base32, an encoding designed to avoid ambiguous characters (like <code>I</code>, <code>L</code>, <code>O</code>, and <code>U</code>), making IDs easier for humans to read and transcribe.</li>
-</ul>
+  <h1 id="resource-id">Resource ID</h1>
+<p>A Dart package for generating, parsing, and verifying resource identifiers using
+<a href="https://www.crockford.com/base32.html">Crockford's Base32</a> encoding with a
+modulo-37 checksum.</p>
+<p>This package implements the specification for robust, user-friendly, and secure
+resource identifiers.</p>
 <h2 id="features">Features</h2>
 <ul>
-<li><strong>Immutable &amp; Type-Safe:</strong> Enforces correctness at compile time.</li>
-<li><strong>Prefix-Aware:</strong> Includes the resource type (e.g., <code>books/</code>) in the ID, preventing ID-mixing bugs.</li>
-<li><strong>Checksum Validation:</strong> The final character is a <code>mod-37</code> checksum. The <code>parse</code> method automatically validates this.</li>
-<li><strong>Crockford's Base32 Encoding:</strong> Uses a highly readable, URL-safe character set.</li>
-<li><strong>Friendly Parsing:</strong> The parser is case-insensitive and ignores hyphens, allowing for more human-readable formats like <code>books/bkb3-xyt4-65kz-69</code>.</li>
-<li><strong>Hierarchical Support:</strong> Natively supports parent-child relationships (e.g., <code>books/1/pages/2</code>).</li>
-<li><strong>Database-First Serialization:</strong> Easily and efficiently serialize to <code>Uint8List</code> (for <code>BINARY</code>), <code>BigInt</code> (for <code>BIGINT</code>), or a pure <code>String</code> (for key-value stores) and reconstruct with confidence.</li>
-<li><strong>Secure Generation:</strong> Uses a cryptographically secure random number generator.</li>
+<li><strong>Secure Random Generation</strong>: Uses <code>Random.secure()</code> (cryptographically secure
+random bytes).</li>
+<li><strong>Crockford Base32</strong>: Human-readable, URL-safe, case-insensitive, and ignores
+hyphens.</li>
+<li><strong>Checksum Verification</strong>: Built-in modulo-37 checksum detects typos and
+invalid IDs immediately.</li>
+<li><strong>Raw Byte Access</strong>: Exposes the underlying random bytes for efficient
+database storage (e.g., as <code>BINARY</code> or large integers).</li>
+<li><strong>Hierarchical Support</strong>: Supports parsing identifiers with path contexts
+(e.g., <code>books/123/pages/456</code> resolves to the leaf ID <code>456</code> with context
+<code>books/123/pages</code>).</li>
 </ul>
-<h2 id="getting-started">Getting Started</h2>
-<p>Add the package to your <code>pubspec.yaml</code>:</p>
-<pre class="language-yaml"><code class="language-yaml">dependencies:
-  resource_id: ^0.1.0 # Check pub.dev for latest version
-</code></pre>
-<p>Then, import the package in your Dart file:</p>
-<pre class="language-dart"><code class="language-dart">import 'package:resource_id/resource_id.dart';
-</code></pre>
 <h2 id="usage">Usage</h2>
-<h3 id="1-generating-a-new-id">1. Generating a New ID</h3>
-<p>Use <code>ResourceId.generate()</code> to create a new, secure identifier. The default size of 8 bytes is recommended for most resources as it fits perfectly in a database <code>BIGINT</code> column.</p>
-<pre class="language-dart"><code class="language-dart">// Generate a new ID for a "books" collection
-final bookId = ResourceId.generate(resourceType: 'books');
+<h3 id="1-generating-identifiers">1. Generating Identifiers</h3>
+<pre class="language-dart"><code class="language-dart">import 'package:resource_id/resource_id.dart';
 
-// The toString() method includes the type prefix and checksum
-print(bookId);
-// Output: books/8A1B2C3D4E5F6G7H8J~ (random part will vary)
-</code></pre>
-<h3 id="2-parsing-and-validating-an-id">2. Parsing and Validating an ID</h3>
-<p>Use <code>ResourceId.parse()</code> to convert a string back into a <code>ResourceId</code>. The checksum is validated automatically, throwing a <code>FormatException</code> if there's a typo.</p>
-<pre class="language-dart"><code class="language-dart">try {
-  // Note the typo: 'P' was mistyped as 'A'
-  final badId = 'books/BKB3XYT465KZ6A'; 
-  ResourceId.parse(badId);
-} on FormatException catch (e) {
-  print(e.message);
-  // Output: Invalid identifier: Checksum mismatch. Possible typo.
+void main() {
+  // Generate a random ID (default 15 bytes of entropy)
+  final id = ResourceId.generate();
+  print(id); // e.g. "0123456789ABCDE~"
+
+  // Generate with a type prefix
+  final bookId = ResourceId.generate(type: 'books');
+  print(bookId); // e.g. "books/0123456789ABCDE~"
+  
+  // Access raw bytes for storage
+  List&lt;int&gt; bytes = bookId.bytes;
 }
 </code></pre>
-<h3 id="3-creating-hierarchical-ids">3. Creating Hierarchical IDs</h3>
-<p>Pass the <code>parent</code> ID during generation to create a child resource.</p>
-<pre class="language-dart"><code class="language-dart">// 1. Create the parent ID
-final bookId = ResourceId.parse('books/BKB3XYT465KZ69');
+<h3 id="2-parsing-and-verifying">2. Parsing and Verifying</h3>
+<pre class="language-dart"><code class="language-dart">try {
+  // Parse a string (handles hyphens and casing)
+  final id = ResourceId.parse('books/0123-4567-89ab-cde~');
+  
+  print('Type: ${id.type}'); // "books"
+  print('Valid checksum: ${id.checksumChar}');
+  
+} catch (e) {
+  print('Invalid ID: $e');
+}
 
-// 2. Generate a child ID, passing the parent
-final pageId = ResourceId.generate(
-  resourceType: 'pages',
-  parent: bookId,
-);
-
-// 3. The full path is included in the ID
-print(pageId); 
-// Output: books/BKB3XYT465KZ69/pages/3N18Y6V9T0A2W4S~
+// Check validity without throwing
+if (ResourceId.isValid('invalid-id')) {
+  // ...
+}
 </code></pre>
-<h3 id="4-storing-in-a-database">4. Storing in a Database</h3>
-<p><code>ResourceId</code> provides multiple ways to get the raw identifier for efficient storage.</p>
-<h4 id="option-a-relational-database-bigint">Option A: Relational Database (BIGINT)</h4>
-<p>This is the most performant option for relational databases, as they are highly optimized for indexing and joining on integer types.</p>
-<pre class="language-dart"><code class="language-dart">final id = ResourceId.generate(resourceType: 'users', sizeInBytes: 8);
+<h3 id="3-hierarchical-identifiers">3. Hierarchical Identifiers</h3>
+<p>The package supports hierarchical paths. When parsing a path, the last segment is
+treated as the unique ID, and the preceding path is preserved as the <code>type</code>.</p>
+<pre class="language-dart"><code class="language-dart">final path = 'books/AHM6/pages/B7K9~';
+final id = ResourceId.parse(path);
 
-// Store in a BIGINT column
-final BigInt intToStore = id.asBigInt;
-
-// Reconstruct from the database value
-final reconstructedId = ResourceId.fromBigInt(
-  resourceType: 'users',
-  value: intToStore,
-  sizeInBytes: 8, // Provide the known, fixed size for this resource type
-);
+print(id.type); // "books/AHM6/pages"
+print(id.toString()); // "books/AHM6/pages/B7K9~" (normalized)
 </code></pre>
-<h4 id="option-b-relational-database-binary">Option B: Relational Database (BINARY)</h4>
-<p>This is the best choice for IDs larger than 8 bytes (64 bits).</p>
-<pre class="language-dart"><code class="language-dart">final id = ResourceId.generate(resourceType: 'sessions', sizeInBytes: 16);
-
-// Store in a BINARY(16) or BLOB column
-final Uint8List bytesToStore = id.bytes;
-
-// Reconstruct from the database value
-final reconstructedId = ResourceId.fromBytes(
-  resourceType: 'sessions',
-  bytes: bytesToStore,
-);
-</code></pre>
-<h4 id="option-c-key-value-store-string">Option C: Key-Value Store (String)</h4>
-<p>For databases like Firestore or DynamoDB, you can store the pure Base32 value.</p>
-<pre class="language-dart"><code class="language-dart">final id = ResourceId.generate(resourceType: 'invoices');
-
-// Store in a string field
-final String valueToStore = id.value;
-
-// Reconstruct from the database value
-final reconstructedId = ResourceId.fromValue(
-  resourceType: 'invoices',
-  value: valueToStore,
-);
-</code></pre>
-<h2 id="comparison-with-uuids">Comparison with UUIDs</h2>
-<p>UUIDs (Universally Unique Identifiers) are a common standard for generating unique IDs. While they are an excellent choice for ensuring global uniqueness, <code>ResourceId</code> offers several practical advantages for application development:</p>
-<table>
-<thead>
-<tr>
-<th align="left">Feature</th>
-<th align="left">Standard UUID</th>
-<th align="left">ResourceId</th>
-<th align="left">Benefit</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td align="left"><strong>Readability</strong></td>
-<td align="left"><code>123e4567-e89b-12d3-a456-426655440000</code></td>
-<td align="left"><code>books/BKB3X-YT465-KZ69</code></td>
-<td align="left">Easier for humans to read, transcribe, and share. Uses a character set that avoids common visual ambiguities.</td>
-</tr>
-<tr>
-<td align="left"><strong>Typo Detection</strong></td>
-<td align="left">None</td>
-<td align="left">Built-in Checksum</td>
-<td align="left"><code>ResourceId.parse()</code> instantly detects typos or copy-paste errors, preventing "not found" errors from ever hitting your database.</td>
-</tr>
-<tr>
-<td align="left"><strong>Resource Context</strong></td>
-<td align="left">No</td>
-<td align="left">Prefixed (<code>books/...</code>)</td>
-<td align="left">Identifiers are self-describing, which makes debugging, logging, and reading API requests much clearer.</td>
-</tr>
-<tr>
-<td align="left"><strong>Size Flexibility</strong></td>
-<td align="left">Fixed at 128 bits</td>
-<td align="left">Flexible (e.g., 64 bits)</td>
-<td align="left">Allows you to choose a smaller (1 byte minimum), more performant size (like a <code>BIGINT</code>) for resources that don't require global uniqueness, optimizing database performance.</td>
-</tr>
-</tbody>
-</table>
-<p>While you can absolutely use a 128-bit <code>ResourceId</code> to wrap a UUID's raw bytes to get the best of both worlds, for most application use cases, a 64-bit <code>ResourceId</code> provides a more ergonomic, safer, and often more performant solution.</p>
+<h2 id="format-specification">Format Specification</h2>
+<ul>
+<li><strong>Encoding</strong>: Crockford Base32.</li>
+<li><strong>Checksum</strong>: Modulo-37 (<code>value % 37</code>).</li>
+<li><strong>Alphabet</strong>: <code>0123456789ABCDEFGHJKMNPQRSTVWXYZ</code> (32 chars) + <code>*~$=U</code> (5
+checksum-only chars).</li>
+<li><strong>Structure</strong>: <code>[optional_type_prefix/][base32_payload][checksum_char]</code></li>
+</ul>
 </section>
 
 
@@ -201,8 +124,7 @@ final reconstructedId = ResourceId.fromValue(
   <span class="name"><a href="resource_id/">resource_id</a></span> 
 
 </dt>
-<dd>A Dart package for creating, parsing, and validating robust, immutable,
-and URL-safe resource identifiers.
+<dd>A library for generating, parsing, and verifying secure resource identifiers.
 </dd>
 
         </dl>
@@ -232,7 +154,7 @@ and URL-safe resource identifiers.
 <footer>
   <span class="no-break">
     resource_id
-      0.1.0
+      0.2.0
   </span>
   
 </footer>
