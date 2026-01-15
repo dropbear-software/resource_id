@@ -22,10 +22,16 @@ void main() {
     print('  Equality Check: ${parsed == userId ? "Matches" : "Mismatch"}');
 
     // Now, let's create a "messy" version of the same ID to show parsing flexibility.
-    final messyString = userId.toString().toLowerCase().replaceRange(10, 10, '-');
+    final messyString = userId.toString().toLowerCase().replaceRange(
+      10,
+      10,
+      '-',
+    );
     final parsedMessy = ResourceId.parse(messyString);
     print('Parsed messy ID successfully: $parsedMessy');
-    print('  Equality Check with messy parse: ${parsedMessy == userId ? "Matches" : "Mismatch"}');
+    print(
+      '  Equality Check with messy parse: ${parsedMessy == userId ? "Matches" : "Mismatch"}',
+    );
   } catch (e) {
     print('Error parsing: $e');
   }
