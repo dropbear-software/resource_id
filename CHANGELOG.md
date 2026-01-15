@@ -9,3 +9,7 @@
   - `bytes` and `fromBytes` for `BINARY` or `BLOB` columns.
   - `value` and `fromValue` for key-value stores.
 - **feature**: Use Crockford's Base32 encoding for improved readability and URL safety.
+
+## 0.2.0
+
+- Complete rewrite to improve the API and implementation after real world usage feedback

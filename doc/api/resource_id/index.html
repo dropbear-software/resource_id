@@ -60,38 +60,9 @@
 
     
 <section class="desc markdown">
-  <p>A Dart package for creating, parsing, and validating robust, immutable,
-and URL-safe resource identifiers.</p>
-<p>This package provides an immutable <code>ResourceId</code> class that enforces modern
-API design principles. It generates prefixed identifiers (e.g.,
-<code>books/9V233V10702ETQW3S1WKTZ~</code>) that are easy to read, copy, and debug,
-with built-in checksums to detect typos.</p>
-<p>The implementation is based on the strong recommendations for great resource
-identifiers in the book API Design Patterns by J.J Geewax.</p>
-<h2 id="usage">Usage</h2>
-<p>A simple usage example:</p>
-<pre class="language-dart"><code class="language-dart">import 'package:resource_id/resource_id.dart';
-
-void main() {
-  // Generate a new ID for a "books" collection
-  final newBookId = ResourceId.generate(resourceType: 'books');
-
-  // The toString() method includes the type prefix and checksum
-  print(newBookId);
-  // Output: books/9V233V10702ETQW3S1WKTZ~ (random part will vary)
-
-  // Parse and validate an ID from a string.
-  // A FormatException is thrown if the checksum is invalid (e.g., a typo).
-  try {
-    // Note the typo: 'Z' was mistyped as 'X'
-    final badId = 'books/9V233V10702ETQW3S1WKTX~';
-    ResourceId.parse(badId);
-  } on FormatException catch (e) {
-    print(e.message);
-    // Output: Invalid identifier: Checksum mismatch. Possible typo.
-  }
-}
-</code></pre>
+  <p>A library for generating, parsing, and verifying secure resource identifiers.</p>
+<p>This library provides the <a href="../resource_id/ResourceId-class.html">ResourceId</a> class, which implements Crockford's
+Base32 encoding with a modulo-37 checksum.</p>
 </section>
 
 
@@ -103,8 +74,8 @@ void main() {
 
 </dt>
 <dd>
-  An immutable, type-safe resource identifier based on the principles
-of robust API design.
+  Represents a Resource Identifier based on Crockford's Base32 encoding
+with a modulo-37 checksum.
 </dd>
 
       </dl>
@@ -145,7 +116,7 @@ of robust API design.
 <footer>
   <span class="no-break">
     resource_id
-      0.1.0
+      0.2.0
   </span>
   
 </footer>

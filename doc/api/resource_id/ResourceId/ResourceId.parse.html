@@ -54,76 +54,70 @@
 
     <section class="multi-line-signature">
       
-      <span class="name ">ResourceId.parse</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="parse-param-fullId"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.9.3/dart-core/String-class.html">String</a></span> <span class="parameter-name">fullId</span></span></li>
+      <span class="name ">ResourceId.parse</span>(<wbr><ol class="parameter-list single-line"> <li><span class="parameter" id="parse-param-input"><span class="type-annotation"><a href="https://api.dart.dev/stable/3.9.4/dart-core/String-class.html">String</a></span> <span class="parameter-name">input</span></span></li>
 </ol>)
     </section>
     
 <section class="desc markdown">
-  <p>Parses a full identifier string (e.g., "books/AHM6A83HENMP~")
-into a validated <a href="../../resource_id/ResourceId-class.html">ResourceId</a> instance.</p>
-<p>This method recursively parses hierarchical paths and validates
-the checksum of the final ID segment.</p>
-<p>Throws a <a href="https://api.dart.dev/stable/3.9.3/dart-core/FormatException-class.html">FormatException</a> if the string is invalid, has a
-checksum mismatch, or is improperly formatted.</p>
+  <p>Parses a string representation of a <a href="../../resource_id/ResourceId-class.html">ResourceId</a>.</p>
+<p>Accepts formats like:</p>
+<ul>
+<li><code>AHM6A83HENMP~</code></li>
+<li><code>books/AHM6A83HENMP~</code></li>
+<li><code>books/ahm6-a83h-enmp~</code> (hyphens and lowercase allowed)</li>
+</ul>
+<p>Throws a <a href="https://api.dart.dev/stable/3.9.4/dart-core/FormatException-class.html">FormatException</a> if the <code>input</code> is invalid (e.g., bad checksum, invalid characters).</p>
 </section>
 
 
     
 <section class="summary source-code" id="source">
   <h2><span>Implementation</span></h2>
-  <pre class="language-dart"><code class="language-dart">factory ResourceId.parse(String fullId) {
-  if (fullId.isEmpty) {
-    throw FormatException(&#39;Identifier cannot be empty.&#39;);
+  <pre class="language-dart"><code class="language-dart">factory ResourceId.parse(String input) {
+  if (input.isEmpty) {
+    throw FormatException(&#39;ResourceId cannot be empty&#39;);
   }
 
-  final parts = fullId.split(&#39;&#47;&#39;);
-  if (parts.length &lt; 2 || parts.any((p) =&gt; p.isEmpty)) {
-    throw FormatException(
-      &quot;Invalid ID format. Must be at least &#39;resourceType&#47;id&#39;.&quot;,
-    );
+  String? type;
+  var idPart = input;
+
+  &#47;&#47; 1. Separate Type
+  if (input.contains(&#39;&#47;&#39;)) {
+    &#47;&#47; Treats the last segment as the ID and the preceding path as the type.
+    final lastSlashIndex = input.lastIndexOf(&#39;&#47;&#39;);
+    type = input.substring(0, lastSlashIndex);
+    idPart = input.substring(lastSlashIndex + 1);
   }
 
-  &#47;&#47; The last two parts are the resource type and the ID value
-  final idWithChecksum = parts.last;
-  final resourceType = parts[parts.length - 2];
-
-  &#47;&#47; Everything else forms the parent path, which we parse recursively
-  ResourceId? parent;
-  final parentParts = parts.sublist(0, parts.length - 2);
-  if (parentParts.isNotEmpty) {
-    parent = ResourceId.parse(parentParts.join(&#39;&#47;&#39;));
+  if (idPart.length &lt; 2) {
+    throw FormatException(&#39;ID part too short&#39;);
   }
 
-  &#47;&#47; Now, validate the final ID part
-  if (idWithChecksum.length &lt; 2) {
-    throw FormatException(&#39;Invalid ID: Missing value or checksum.&#39;);
-  }
+  &#47;&#47; 2. Extract Checksum (last char)
+  final checksumChar = idPart.substring(idPart.length - 1);
+  final payloadStr = idPart.substring(0, idPart.length - 1);
 
-  final encodedValue = idWithChecksum.substring(0, idWithChecksum.length - 1);
-  final checksumChar = idWithChecksum[idWithChecksum.length - 1];
-
-  &#47;&#47; Decode using the &quot;friendly&quot; Crockford&#39;s codec.
-  final Uint8List bytes;
+  &#47;&#47; 3. Decode Payload
+  &#47;&#47; The decoder handles case insensitivity and ignores hyphens.
+  List&lt;int&gt; decodedBytes;
   try {
-    bytes = _codec.decode(encodedValue);
+    decodedBytes = _codec.decode(payloadStr);
   } catch (e) {
-    throw FormatException(&#39;Invalid Base32 format: $e&#39;);
+    throw FormatException(&#39;Invalid Base32 encoding: $e&#39;);
   }
 
-  &#47;&#47; Verify the checksum
-  final expectedChar = _getChecksumCharacter(_calculateChecksum(bytes));
-  if (checksumChar != expectedChar) {
-    &#47;&#47; This is a key feature: distinguishing typos from &quot;not found&quot;
+  &#47;&#47; 4. Verify Checksum
+  final calculatedChecksum = calculateChecksum(decodedBytes);
+  final expectedChar = getChecksumCharacter(calculatedChecksum);
+
+  &#47;&#47; Normalize checksum char for comparison.
+  if (checksumChar.toUpperCase() != expectedChar) {
     throw FormatException(
-      &#39;Invalid identifier: Checksum mismatch. Possible typo.&#39;,
+      &#39;Invalid checksum. Expected $expectedChar, got $checksumChar&#39;,
     );
   }
 
-  return ResourceId._(
-    resourceType: resourceType,
-    bytes: bytes,
-    parent: parent,
-  );
+  return ResourceId._(type, decodedBytes, expectedChar);
 }</code></pre>
 </section>
 
@@ -152,7 +146,7 @@ checksum mismatch, or is improperly formatted.</p>
 <footer>
   <span class="no-break">
     resource_id
-      0.1.0
+      0.2.0
   </span>
   
 </footer>
